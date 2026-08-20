@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgentGate | Commerce trust console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { ink: '#e6edf7', navy: '#f4f7fb', signal: '#6d9fff', canvas: '#090f1a', panel: '#101a2a', line: '#26344a' },
+            boxShadow: { soft: '0 18px 45px rgba(0, 0, 0, 0.20)' }
+          }
+        }
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-canvas text-ink antialiased">
+    <header class="border-b border-line bg-[#0c1421]">
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+        <div>
+          <p class="text-lg font-bold tracking-tight text-navy">AgentGate</p>
+          <p class="text-xs text-slate-400">Commerce trust & inspection layer</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-5 py-7 sm:px-8">
+      <section class="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-signal">Razorpay AI Buildathon demo</p>
+          <h1 class="text-3xl font-bold tracking-tight text-navy sm:text-4xl">Let the agent shop. Let the gate decide.</h1>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Every order is checked against a spend cap, quantity limit, and cooldown before it can reach Razorpay.</p>
+        </div>
+        <button id="refresh-button" class="rounded-lg border border-line bg-panel px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-signal hover:text-white">Refresh evidence</button>
+      </section>
+
+      <div class="grid gap-6 lg:grid-cols-3">
+        <section class="lg:col-span-2 rounded-xl border border-line bg-panel shadow-soft">
+          <div class="flex items-center justify-between border-b border-line px-5 py-4">
+            <div><h2 class="font-semibold text-navy">Buyer conversation</h2><p class="text-xs text-slate-400">Session <span id="session-label"></span></p></div>
+            <span id="agent-status" class="text-xs font-medium text-slate-400">Agent ready</span>
+          </div>
+          <div id="messages" class="h-80 space-y-4 overflow-y-auto px-5 py-5 sm:h-96" aria-live="polite">
+            <div class="max-w-md rounded-xl rounded-tl-sm border border-line bg-[#0c1421] px-4 py-3 text-sm leading-6 text-slate-300">Hi! I can browse the catalog and place an order after it passes AgentGate’s checks.</div>
+          </div>
+          <form id="chat-form" class="border-t border-line p-4">
+            <label class="sr-only" for="message-input">Message the shopping agent</label>
+            <div class="flex gap-2"><input id="message-input" required autocomplete="off" class="min-w-0 flex-1 rounded-lg border border-line bg-[#0c1421] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-signal focus:ring-4 focus:ring-blue-500/10" placeholder="Ask about products or place an order…" /><button id="send-button" class="rounded-lg bg-signal px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#8cafef] disabled:cursor-not-allowed disabled:opacity-60">Send</button></div>
+          </form>
+        </section>
+
+        <aside class="space-y-5">
+          <section class="rounded-xl border border-line bg-panel p-5 shadow-soft">
+            <div class="mb-4 flex items-center justify-between"><h2 class="font-semibold text-navy">Gate inspector</h2><span id="decision-count" class="text-xs text-slate-400">Awaiting order</span></div>
+            <div id="verdict-card" class="rounded-lg border border-line bg-[#0c1421] p-4"><p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Latest verdict</p><p id="verdict-title" class="mt-1 text-lg font-bold text-navy">No order yet</p><p id="verdict-reason" class="mt-1 text-sm leading-5 text-slate-400">Order decisions will appear here with the gate’s explanation.</p></div>
+            <dl class="mt-4 space-y-3 text-sm"><div class="flex justify-between border-b border-line pb-3"><dt class="text-slate-400">Session spend cap</dt><dd class="font-semibold text-navy">₹5,000</dd></div><div class="flex justify-between border-b border-line pb-3"><dt class="text-slate-400">Max per item</dt><dd class="font-semibold text-navy">3 units</dd></div><div class="flex justify-between"><dt class="text-slate-400">Order cooldown</dt><dd class="font-semibold text-navy">2 seconds</dd></div></dl>
+          </section>
+          <section class="rounded-xl border border-line bg-[#0c1421] p-5 text-white shadow-soft"><div class="flex items-center justify-between"><h2 class="font-semibold">Audit trail</h2><span id="audit-count" class="text-xs text-slate-400">0 events</span></div><div id="audit-log" class="mt-4 divide-y divide-line text-sm"><p class="py-3 text-slate-400">No session events yet.</p></div></section>
+        </aside>
+      </div>
+
+      <section class="mt-6 rounded-xl border border-line bg-panel p-5 shadow-soft"><div class="mb-4 flex items-end justify-between"><div><h2 class="font-semibold text-navy">Agent-readable catalog</h2><p class="text-xs text-slate-400">Click an item to ask the agent to place an order.</p></div><span id="catalog-status" class="text-xs text-slate-400">Loading catalog…</span></div><div id="catalog" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"></div></section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
