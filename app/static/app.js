@@ -65,7 +65,7 @@ async function loadCatalog() {
   products.forEach((product) => {
     const card = document.createElement("article");
     card.className = "flex min-h-40 flex-col rounded-xl border border-line bg-canvas p-5 transition-all duration-300 hover:border-signal hover:shadow-glow hover:-translate-y-1 group";
-    card.innerHTML = `<p class="text-[10px] font-bold uppercase tracking-widest text-ink group-hover:text-signal transition-colors">${product.id}</p><h3 class="mt-2 font-semibold text-navy">${product.name}</h3><p class="mt-1 text-sm text-ink line-clamp-2">${product.description}</p><div class="mt-auto flex items-center justify-between pt-4"><span class="font-bold text-navy">${money(product.price_inr)}</span><button class="ask-product rounded-lg border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-navy transition-colors hover:border-signal hover:bg-signal/10 hover:text-signal">Order</button></div>`;
+    card.innerHTML = `<p class="text-[10px] font-bold uppercase tracking-widest text-ink group-hover:text-signal transition-colors">${product.id}</p><h3 class="mt-2 font-semibold text-navy">${product.name}</h3><p class="mt-1 text-sm text-ink line-clamp-2">${product.description}</p><div class="mt-auto flex items-center justify-between pt-4"><span class="font-bold text-navy">${money(product.price_inr)}</span><button class="ask-product rounded-lg border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-navy transition-colors hover:border-signal hover:bg-signal/10 hover:text-signal" data-product="${product.name}">Order</button></div>`;
     catalog.appendChild(card);
   });
   $("catalog-status").textContent = `${products.length} items available`;
