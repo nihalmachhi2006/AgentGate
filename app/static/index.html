@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -76,6 +77,16 @@
           </div>
           <div id="messages" class="h-96 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth" aria-live="polite">
             <div class="max-w-md rounded-2xl rounded-tl-sm border border-line bg-[#222] px-4 py-3 text-sm leading-6 text-navy shadow-sm">Hi! I can browse the catalog and place an order after it passes AgentGate’s checks.</div>
+          </div>
+          <!-- Payment banner: hidden until the agent confirms a real Razorpay order -->
+          <div id="payment-banner" class="hidden border-t border-signal/30 bg-[#00E6CC]/5 px-5 py-4 flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-signal">Order created — payment pending</p>
+              <p id="payment-banner-amount" class="mt-0.5 text-sm text-navy"></p>
+            </div>
+            <button id="pay-now-btn" class="shrink-0 rounded-lg bg-signal px-5 py-2.5 text-sm font-bold text-[#090F1A] transition-all hover:bg-[#1eead6] hover:shadow-glow active:scale-95">
+              Complete Payment
+            </button>
           </div>
           <form id="chat-form" class="border-t border-line p-4 bg-[#181818]">
             <label class="sr-only" for="message-input">Message the shopping agent</label>
