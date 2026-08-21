@@ -1,5 +1,5 @@
 import json
-from app.config import GROQ_API_KEY, GROQ_CONFIGURED, GROQ_MODEL
+from app.config import GROQ_API_KEY, GROQ_CONFIGURED, GROQ_MODEL, RAZORPAY_KEY_ID, RAZORPAY_CONFIGURED
 from app.catalog import list_products, get_product
 from app.gate import check_order, record_order
 from app.razorpay_client import create_order
@@ -77,6 +77,9 @@ def _run_tool(tool_name, tool_input, session_id):
             "amount_inr": amount,
             "razorpay_order_id": razorpay_response["id"],
             "mock": razorpay_response.get("mock", False),
+            # key_id is the PUBLIC razorpay key — safe to send to the browser
+            # so Checkout.js can open the payment modal
+            "key_id": RAZORPAY_KEY_ID if RAZORPAY_CONFIGURED else None,
         }
 
     return {"error": f"unknown tool {tool_name}"}
