@@ -1,6 +1,7 @@
 const state = {
   sessionId: `web_${crypto.randomUUID().slice(0, 8)}`,
   history: [],
+  pendingPayment: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -28,11 +29,10 @@ function showVerdict(entry) {
   $("verdict-title").textContent = allowed ? "Allowed — sent to Razorpay" : "Blocked by AgentGate";
   $("verdict-title").className = `mt-1 text-lg font-bold ${allowed ? "text-signal" : "text-warn"}`;
   $("verdict-reason").textContent = entry.reason;
-  $("verdict-reason").className = `mt-2 text-sm leading-5 ${allowed ? "text-navy" : "text-navy"}`;
 }
 
 function renderAudit(entries) {
-  $("audit-count").textContent = `${entries.length} event${entries.length === 1 ? "" : "s"}`;
+  $("audit-count").innerHTML = `<div class="w-1.5 h-1.5 rounded-full ${entries.length ? 'bg-signal' : 'bg-ink/50'}"></div> ${entries.length} event${entries.length === 1 ? "" : "s"}`;
   $("decision-count").textContent = entries.length ? `Decision ${entries[0].id}` : "Awaiting order";
   const log = $("audit-log");
   log.replaceChildren();
@@ -75,26 +75,120 @@ async function loadCatalog() {
   }));
 }
 
+// ─── Razorpay Checkout ────────────────────────────────────────────────────────
+
+function showPaymentBanner(pendingPayment) {
+  state.pendingPayment = pendingPayment;
+  $("payment-banner-amount").textContent =
+    `Order ${pendingPayment.order_id} · ${money(pendingPayment.amount_inr)} ready to pay`;
+  $("payment-banner").classList.remove("hidden");
+}
+
+function hidePaymentBanner() {
+  $("payment-banner").classList.add("hidden");
+  state.pendingPayment = null;
+}
+
+function openRazorpayCheckout(pendingPayment) {
+  const options = {
+    key: pendingPayment.key_id,
+    order_id: pendingPayment.order_id,
+    amount: pendingPayment.amount_inr * 100, // paise
+    currency: "INR",
+    name: "AgentGate Store",
+    description: "Order Payment",
+    image: "",
+    theme: { color: "#00E6CC" },
+    handler: function (response) {
+      // Payment completed successfully
+      hidePaymentBanner();
+      appendMessage(
+        "agent",
+        `✅ Payment complete! Payment ID: ${response.razorpay_payment_id}. ` +
+        `Check your Razorpay dashboard → Payments for the full record.`
+      );
+      refreshEvidence().catch(() => {});
+    },
+    modal: {
+      ondismiss: function () {
+        appendMessage(
+          "agent",
+          "Payment window closed. Your Razorpay order is saved — click \"Complete Payment\" above to pay when you're ready."
+        );
+      },
+    },
+    prefill: {
+      // Pre-fill with test values so the demo is fast
+      name: "Test Buyer",
+      email: "test@agentgate.dev",
+    },
+    notes: {
+      session_id: state.sessionId,
+    },
+  };
+
+  try {
+    const rzp = new Razorpay(options);
+    rzp.on("payment.failed", function (resp) {
+      appendMessage("agent", `❌ Payment failed: ${resp.error.description}`);
+    });
+    rzp.open();
+  } catch (err) {
+    appendMessage("agent", `Could not open payment window: ${err.message}`);
+  }
+}
+
+// Wire up the "Complete Payment" button
+$("pay-now-btn").addEventListener("click", () => {
+  if (state.pendingPayment) {
+    openRazorpayCheckout(state.pendingPayment);
+  }
+});
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
 async function sendMessage(text) {
   appendMessage("buyer", text);
   $("send-button").disabled = true;
   $("agent-status").innerHTML = `<div class="flex items-center gap-1.5"><div class="flex space-x-1"><div class="w-1.5 h-1.5 bg-signal rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-signal rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-1.5 bg-signal rounded-full animate-bounce" style="animation-delay: 0.2s"></div></div><span class="text-signal">Agent thinking…</span></div>`;
+
   try {
-    const response = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: state.sessionId, message: text, history: state.history }) });
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: state.sessionId, message: text, history: state.history }),
+    });
     if (!response.ok) throw new Error("The agent request failed");
     const payload = await response.json();
     state.history = payload.history;
     appendMessage("agent", payload.reply);
+
+    // If the backend detected a real Razorpay order in this turn, show the payment banner
+    if (payload.pending_payment) {
+      showPaymentBanner(payload.pending_payment);
+    }
+
     await refreshEvidence();
   } catch (error) {
-    appendMessage("agent", "I couldn’t complete that request. Please check that the AgentGate API is running.");
+    appendMessage("agent", "I couldn't complete that request. Please check that the AgentGate API is running.");
   } finally {
     $("send-button").disabled = false;
     $("agent-status").innerHTML = "Agent ready";
   }
 }
 
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
 $("session-label").textContent = state.sessionId;
-$("chat-form").addEventListener("submit", (event) => { event.preventDefault(); const input = $("message-input"); const text = input.value.trim(); if (!text) return; input.value = ""; sendMessage(text); });
+$("chat-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = $("message-input");
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  sendMessage(text);
+});
 $("refresh-button").addEventListener("click", () => refreshEvidence().catch(() => {}));
-Promise.all([loadCatalog(), refreshEvidence()]).catch((error) => { $("catalog-status").textContent = error.message; });
+Promise.all([loadCatalog(), refreshEvidence()]).catch((error) => {
+  $("catalog-status").textContent = error.message;
+});
