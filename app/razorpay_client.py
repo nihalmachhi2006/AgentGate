@@ -28,8 +28,13 @@ def create_order(amount_inr, receipt_note):
     order = _client.order.create({
         "amount": amount_inr * 100,
         "currency": "INR",
-        "receipt": receipt_note,
-        "payment_capture": 1,
+        # Razorpay enforces a 40-character max on receipt
+        "receipt": receipt_note[:40],
+        # notes make the order easy to find in the Razorpay dashboard
+        "notes": {
+            "source": "AgentGate",
+            "receipt_full": receipt_note,
+        },
     })
     order["mock"] = False
     return order
